@@ -15,14 +15,39 @@ const authenticatedUser = (username,password)=>{ //returns boolean
 
 //only registered users can login
 regd_users.post("/login", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    const username = req.body.username;
+	const password = req.body.password;
+	if (!username || !password) {
+		return res.status(404).json({ message: 'Invalid username or password' });
+	}
+	if (authenticatedUser(username, password)) {
+		let accessToken = jwt.sign({ data: password },'access',{ expiresIn: 60 * 60 * 60 });
+		req.session.authorization = {
+			accessToken,username,
+		};
+		res.status(200).send('User successfully logged in');
+	} else {
+		res.status(208).json({message: 'Invalid Login. Check username and password',});
+	}
 });
+  //Write your code here
+  
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+
+	//Write your code here
+	const isbn = req.params.isbn;
+	const userReview = req.query.review;
+	const username = req.session.authorization.username;
+	if (!username) {
+		res.status(401).send('You must login to submit a review');
+	}
+        if (!books[isbn]) {
+		res.status(404).send('Book not found. Please enter the correct isbn');
+	}
+	books[isbn].reviews[username] = userReview;
+	res.send('Your review for the book with ISBN ${isbn} has been added');
 });
 
 module.exports.authenticated = regd_users;
